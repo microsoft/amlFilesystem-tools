@@ -1,9 +1,9 @@
 This directory contains tools for troubleshooting Lustre on a client.
 
-=== collect.sh usage:
+=== collect.bash usage:
 
 For basic info collection:
-* collect.sh (without arguments) gathers info for each Lustre mount point
+* collect.bash (without arguments) gathers info for each Lustre mount point
 * -m <mount_point without trainling "/"> (can be multiple) default to all Lustre mount points
 * -l <log dir> default to "."
 * -s <directory> (can be multiple) gets stripe information for each specified directory
