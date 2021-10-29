@@ -243,6 +243,11 @@ pack_info() {
     chmod o+r $debug_kernel_dump_file
     tar rf $tar_file $debug_kernel_dump_file
 
+    echo -e "===== Lnet info =====\n"
+    echo "INFO: lnetctl export:"
+    lnetctl export
+    echo
+
     echo "===== Collected info packed in ${tar_file}.gz ====="
     tar rf $tar_file $log_file
     gzip $tar_file
