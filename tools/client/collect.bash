@@ -247,7 +247,7 @@ pack_info() {
     chmod o+r $debug_kernel_dump_file
     tar rf $tar_file $debug_kernel_dump_file
 
-    echo -e "===== Lnet info =====\n"
+    echo -e "===== LNet info =====\n"
     echo "INFO: lnetctl export:"
     lnetctl export
     echo
