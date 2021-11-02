@@ -15,7 +15,7 @@ collect lustre info
     -h usage
     -m <mount point without trailing "/"> (can be multiple) default to all Lustre mount points
     -s <dir> (for lfs getstripe, can be multiple)
-    -v verbose
+    -v verbose (stdout and stderr both go to console)
     -D <file> start debug_daemon with debug log file
     -Q <file> stop debug_daemon with debug log file previously set with -D
     -M <debug mask> optional. examples: "+net", "-net", or "-1" for "start debug_daemon"
@@ -127,6 +127,7 @@ main() {
     fi
 
     log_file="$log_dir/collect_log.$date_str"
+    error_log_file="$log_dir/error_log.$date_str"
     touch $log_file
     chmod o+r $log_file
 
@@ -137,8 +138,11 @@ main() {
     chmod o+r $tar_file
 
     if [[ -z $verbose ]]; then
-        # stdout goes to log only.  stderr goes to console only.
+        # stdout goes to log only.  stderr to console and error_log file.
+        touch $error_log_file
+        chmod o+r $error_log_file
         exec > $log_file
+        exec 2> >(tee -i $error_log_file >&2)
     else
         # stdout and stderr go to both console and log.
         exec > >(tee -i $log_file)
@@ -250,6 +254,11 @@ pack_info() {
 
     echo "===== Collected info packed in ${tar_file}.gz ====="
     tar rf $tar_file $log_file
+    if [[ -e $error_log_file ]] && [[ -s $error_log_file ]]; then
+        tar rf $tar_file $error_log_file
+    else
+        rm -f $error_log_file
+    fi
     gzip $tar_file
 }
 
