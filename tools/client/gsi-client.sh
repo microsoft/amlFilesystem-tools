@@ -41,7 +41,7 @@ main() {
 	lctl_exists=`which lctl`
 	lnetctl_exists=`which lnetctl`
 	echo "lfs: " $lfs_exists "lctl: " $lctl_exists "lnetctl: " $lnetctl_exists
-	if ! [ $lfs_exists ] || [ $lctl_exists ] || [ $lnetctl_exists ]; then
+	if ! ([ $lfs_exists ] || [ $lctl_exists ] || [ $lnetctl_exists ]); then
 		echo "not a lustre client"
 		prerequisites_met=0
 	else
