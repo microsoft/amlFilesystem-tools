@@ -41,10 +41,11 @@ main() {
 	lctl_exists=`which lctl`
 	lnetctl_exists=`which lnetctl`
 	echo "lfs: " $lfs_exists "lctl: " $lctl_exists "lnetctl: " $lnetctl_exists
-	if [ $lfs_exists ] || [ $lctl_exists ] || [ $lnetctl_exists ]; then
-		echo "client has lfs, lctl, and lnetctl commands."
+	if ! [ $lfs_exists ] || [ $lctl_exists ] || [ $lnetctl_exists ]; then
+		echo "not a lustre client"
+		prerequisites_met=0
 	else
-		echo "no lctl commands"
+		echo "Yes, cluster client!"
 	fi
 
 	clientgsidir="client-gsi-$(date +"%FT%T")"
