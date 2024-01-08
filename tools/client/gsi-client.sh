@@ -27,7 +27,6 @@ main() {
         esac
     done
 	prerequisites_met=1
-	echo $logdir
 	if [[ ! -d $logdir ]] || [[ ! -w $logdir ]]; then
         >&2 echo "ERROR: log directory $logdir must exist and be writable"
         # exit -1
@@ -46,7 +45,7 @@ main() {
 		echo "not a lustre client"
 		prerequisites_met=0
 	else
-		echo "Yes, Luster client!"
+		echo "Yes, Lustre client!"
 	fi
 
 	if [ $prerequisites_met == 1 ]; then
