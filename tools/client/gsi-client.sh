@@ -45,7 +45,7 @@ main() {
 		echo "not a lustre client"
 		prerequisites_met=0
 	else
-		echo "Yes, cluster client!"
+		echo "Yes, Luster client!"
 	fi
 
 	if [ $prerequisites_met == 1 ]; then
@@ -98,6 +98,15 @@ main() {
 			tar cvfz ~/$clientgsidir/syslog.tgz syslog* >> ~/$clientgsidir/gsi_client.log
 			cd ~/$clientgsidir
 		fi
+		if [ -f /var/log/messages ]
+		then
+			cd /var/log
+			command_divider "cd /var/log; tail -30 messages"
+			tail -30 messages |tee >> ~/$clientgsidir/gsi_client.log
+			command_divider "cd /var/log; tar cvfz ~/$clientgsidir/messages.tgz messages*"
+			tar cvfz ~/$clientgsidir/messages.tgz messages* >> ~/$clientgsidir/gsi_client.log
+			cd ~/$clientgsidir
+		fi		
 
 		command_divider "sudo dmesg -T"
 		sudo dmesg -T > dmesg
