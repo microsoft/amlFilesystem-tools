@@ -101,10 +101,10 @@ main() {
 		if [ -f /var/log/messages ]
 		then
 			cd /var/log
-			command_divider "cd /var/log; tail -30 messages"
-			tail -30 messages |tee >> ~/$clientgsidir/gsi_client.log
-			command_divider "cd /var/log; tar cvfz ~/$clientgsidir/messages.tgz messages*"
-			tar cvfz ~/$clientgsidir/messages.tgz messages* >> ~/$clientgsidir/gsi_client.log
+			command_divider "cd /var/log; sudo tail -30 messages"
+			sudo tail -30 messages |tee >> ~/$clientgsidir/gsi_client.log
+			command_divider "cd /var/log; sudo tar cvfz ~/$clientgsidir/messages.tgz messages*"
+			sudo tar cvfz ~/$clientgsidir/messages.tgz messages* >> ~/$clientgsidir/gsi_client.log
 			cd ~/$clientgsidir
 		fi		
 
