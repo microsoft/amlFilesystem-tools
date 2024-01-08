@@ -27,6 +27,7 @@ main() {
         esac
     done
 	prerequisites_met=1
+	echo $logdir
 	if [[ ! -d $logdir ]] || [[ ! -w $logdir ]]; then
         >&2 echo "ERROR: log directory $logdir must exist and be writable"
         # exit -1
