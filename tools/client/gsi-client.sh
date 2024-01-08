@@ -94,19 +94,19 @@ main() {
 		then
 			cd /var/log
 			command_divider "cd /var/log; tail -30 syslog"
-			tail -30 syslog |tee >> ~/$clientgsidir/gsi_client.log
-			command_divider "cd /var/log; tar cvfz ~/$clientgsidir/syslog.tgz syslog*"
-			tar cvfz ~/$clientgsidir/syslog.tgz syslog* >> ~/$clientgsidir/gsi_client.log
-			cd ~/$clientgsidir
+			tail -30 syslog |tee >> $logdir/$clientgsidir/gsi_client.log
+			command_divider "cd /var/log; tar cvfz $logdir/$clientgsidir/syslog.tgz syslog*"
+			tar cvfz $logdir/$clientgsidir/syslog.tgz syslog* >> $logdir/$clientgsidir/gsi_client.log
+			cd $logdir/$clientgsidir
 		fi
 		if [ -f /var/log/messages ]
 		then
 			cd /var/log
 			command_divider "cd /var/log; sudo tail -30 messages"
-			sudo tail -30 messages |tee >> ~/$clientgsidir/gsi_client.log
-			command_divider "cd /var/log; sudo tar cvfz ~/$clientgsidir/messages.tgz messages*"
-			sudo tar cvfz ~/$clientgsidir/messages.tgz messages* >> ~/$clientgsidir/gsi_client.log
-			cd ~/$clientgsidir
+			sudo tail -30 messages |tee >> $logdir/$clientgsidir/gsi_client.log
+			command_divider "cd /var/log; sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages*"
+			sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages* >> $logdir/$clientgsidir/gsi_client.log
+			cd $logdir/$clientgsidir
 		fi		
 
 		command_divider "sudo dmesg -T"
