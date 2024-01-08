@@ -1,7 +1,8 @@
 #!/bin/bash
+#
 # Copyright (c) Microsoft Corporation. All rights reserved.
 #
-# collect Lustre info for troubleshooting.  As of 1/8/2024 commands run to collect logs:
+# collect Lustre client info for troubleshooting.  As of 1/8/2024 commands run to collect logs:
 	# uname -a
 	# cat /etc/lsb-release
 	# uptime; uptime -p
@@ -107,25 +108,7 @@ main() {
 			command_divider "lfs check all"
 			lfs check all 2>&1 |tee lfs_check_all >> gsi_client.log
 		fi
-		get_logs
-		# if [ -f /var/log/syslog ]
-		# then
-		# 	cd /var/log
-		# 	command_divider "cd /var/log; tail -30 syslog"
-		# 	tail -30 syslog |tee >> $logdir/$clientgsidir/gsi_client.log
-		# 	command_divider "cd /var/log; tar cvfz $logdir/$clientgsidir/syslog.tgz syslog*"
-		# 	tar cvfz $logdir/$clientgsidir/syslog.tgz syslog* >> $logdir/$clientgsidir/gsi_client.log
-		# 	cd $logdir/$clientgsidir
-		# fi
-		# if [ -f /var/log/messages ]
-		# then
-		# 	cd /var/log
-		# 	command_divider "cd /var/log; sudo tail -30 messages"
-		# 	sudo tail -30 messages |tee >> $logdir/$clientgsidir/gsi_client.log
-		# 	command_divider "cd /var/log; sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages*"
-		# 	sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages* >> $logdir/$clientgsidir/gsi_client.log
-		# 	cd $logdir/$clientgsidir
-		# fi		
+		get_logs # subroutine to get syslog or messages files
 
 		command_divider "sudo dmesg -T"
 		sudo dmesg -T > dmesg
