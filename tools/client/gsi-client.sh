@@ -159,7 +159,7 @@ main() {
 		else
 			command_divider "Cannot find local lustre mount point.  Unable to display hsm_state."
 		fi
-
+		pwd; whoami
 		chmod 666 *
 		cd ..
 		gsi_compressed=`echo $clientgsidir.tgz |sed 's/:/-/g'`
