@@ -14,3 +14,8 @@ For info collection via debug daemon:
 * -Q <debug log file> stops debug daemon with debug log file previously set with -D
 * -M <debug mask> optional. examples: "+net", "-net", or "-1" for "start debug_daemon"
 * -Z <size> debug log file size, default to unlimited for "start debug_daemon"
+
+== gsi-client.sh usage:
+
+Another tool for collecint information from a lustre client.
+* 
