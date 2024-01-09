@@ -36,7 +36,7 @@ EOF
 
 main() {
     logdir=$HOME
-	while getopts "dhl:m:s:vD:M:Q:Z:" arg; do
+	while getopts "hl" arg; do
         case $arg in
             h)
                 usage
