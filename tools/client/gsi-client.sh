@@ -36,7 +36,7 @@ EOF
 
 main() {
     logdir=$HOME
-	while getopts "hl" arg; do
+	while getopts "hl:" arg; do
         case $arg in
             h)
                 usage
@@ -49,7 +49,6 @@ main() {
 	prerequisites_met=1
 	if [[ ! -d $logdir ]] || [[ ! -w $logdir ]]; then
         >&2 echo "ERROR: log directory $logdir must exist and be writable"
-        # exit -1
 		prerequisites_met=0
     fi
 	sudo_works=`sudo -n uptime 2>&1 | grep "load" | wc -l`
