@@ -17,5 +17,9 @@ For info collection via debug daemon:
 
 == gsi-client.sh usage:
 
-Another tool for collecint information from a lustre client.
-* 
+Tool for collecintg information from a non-k8s lustre clients
+* gsi-client.sh (without arguments) gathers info from each lustre client the script is run on.
+* -l <log dir> defaults to "."
+* -h display help info
+*
+* Information is gathered into a tarball file in the format: client-gsi-YYYY-MM-DDTHH-MM-SS.tgz
