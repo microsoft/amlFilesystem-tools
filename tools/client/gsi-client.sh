@@ -135,7 +135,7 @@ main() {
     else
         command_divider "Cannot find local lustre mount point.  Unable to display hsm_state."
     fi
-    sudo chmod 666 ./*glob*
+    sudo chmod 666 ./*
     cd ..
     gsi_compressed=$(echo "$clientgsidir".tgz |sed 's/:/-/g')
     tar cvfz "$gsi_compressed" "$clientgsidir"/ >/dev/null
