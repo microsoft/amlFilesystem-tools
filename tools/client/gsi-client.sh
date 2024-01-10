@@ -54,7 +54,6 @@ main() {
     mkdir "$clientgsidir"
     cd "$clientgsidir" || exit
     log="$logdir"/"$clientgsidir"/gsi_client.log
-    echo "$log"
     echo "$(date +"%FT%T"): Starting gsi_client.sh cpature." > "$log"
     echo "$(date +"%FT%T"): client gsi dir: " "$clientgsidir" >> "$log"
     command_divider "uname -a"
@@ -125,7 +124,7 @@ main() {
         for local_lustre_mount in $(mount |grep -E "type lustre" |awk '{print $3}')
         do
             command_divider "find $local_lustre_mount -type f -print0 |xargs -0 -n 1 lfs  hsm_state"
-            hsm_state_file=$(echo "hsm_state $local_lustre_mount" |sed 's/\//_/g')
+            hsm_state_file=$(echo "hsm_state$local_lustre_mount" |sed 's/\//_/g')
             echo "$local_lustre_mount" |tee "$hsm_state_file" >> "$log"
             find "$local_lustre_mount" -type f -print0 |xargs -0 -n 1 lfs hsm_state >> "$hsm_state_file"
             number_of_files=$(wc -l "$hsm_state_file")
