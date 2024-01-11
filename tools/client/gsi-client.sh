@@ -195,7 +195,6 @@ get_logs() {
         sudo tail -30 messages |tee >> "$log"
         command_divider "cd /var/log; sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages*"
         sudo tar cvfz "$logdir"/"$clientgsidir"/messages.tgz messages* |tee -a "$log" > /dev/null
-        tar cvfz 
         cd "$logdir"/"$clientgsidir" || exit
     fi
 }
