@@ -14,3 +14,12 @@ For info collection via debug daemon:
 * -Q <debug log file> stops debug daemon with debug log file previously set with -D
 * -M <debug mask> optional. examples: "+net", "-net", or "-1" for "start debug_daemon"
 * -Z <size> debug log file size, default to unlimited for "start debug_daemon"
+
+== gsi-client.sh usage:
+
+Tool for collecintg information from a non-k8s lustre clients
+* gsi-client.sh (without arguments) gathers info from each lustre client the script is run on.
+* -l <log dir> defaults to "."
+* -h display help info
+*
+* Information is gathered into a tarball file in the format: client-gsi-YYYY-MM-DDTHH-MM-SS.tgz
