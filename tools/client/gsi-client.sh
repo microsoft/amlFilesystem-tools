@@ -28,19 +28,23 @@ usage() {
     echo "Usage ${0##*/} [options]"
     echo "collect lustre info"
     echo "  -l <log dir> starting dir for client-gsi-<date/time> dir.  Default to $HOME"
+    echo "  -s Display hsm_state of all files.  May be very time consuming.  Skip is default."
     echo "  -h help"
     exit
 }
 
 main() {
     logdir=$HOME
-    while getopts "hl:" arg; do
+    while getopts "hl:s" arg; do
         case $arg in
             h)
                 usage
                 ;;
             l)
                 logdir="$OPTARG"
+                ;;
+            s)
+                run_hsm_state=1
                 ;;
             *)
                 exit
@@ -62,6 +66,7 @@ main() {
     tee release  >> "$log" < /etc/os-release
     command_divider "uptime; uptime -p"
     uptime |tee uptime >> "$log"; uptime -p |tee -a uptime >> "$log"
+    find_vm_sku # call subroutine to find the azure sku for the vm
     command_divider "netstat -rn"
     netstat -rn |tee netstat_rn >> "$log"
     command_divider "netstat -Wan"
@@ -100,6 +105,8 @@ main() {
     else
         command_divider "No /etc/fstab file."
     fi
+    command_divider "find /var/crash -ls"
+    find /var/crash -ls |tee var_crash >> "$log"
 
     local_lustre_mount=$(mount |grep -E "type lustre" |awk '{print $3}' |tail -1)
     if [ "$local_lustre_mount" ]
@@ -118,22 +125,11 @@ main() {
     else
         command_divider "client does not contain a value for lustrefs read_ahead_kb.  All good."
     fi
-
-    if [ "$local_lustre_mount" ]
+    if [ "$run_hsm_state" ]
     then
-        for local_lustre_mount in $(mount |grep -E "type lustre" |awk '{print $3}')
-        do
-            command_divider "find $local_lustre_mount -type f -print0 |xargs -0 -n 1 lfs  hsm_state"
-            hsm_state_file=$(echo "hsm_state$local_lustre_mount" |sed 's/\//_/g')
-            echo "$local_lustre_mount" |tee "$hsm_state_file" >> "$log"
-            find "$local_lustre_mount" -type f -print0 |xargs -0 -n 1 lfs hsm_state >> "$hsm_state_file"
-            number_of_files=$(wc -l "$hsm_state_file")
-            echo "Number of files: $number_of_files" |tee -a "$hsm_state_file" >> "$log"
-
-        done
-    else
-        command_divider "Cannot find local lustre mount point.  Unable to display hsm_state."
+        display_hsm_state # call subroutine to display hsm_state of all files.  May be time consuming.
     fi
+
     sudo chmod 666 ./*
     cd ..
     gsi_compressed=$(echo "$clientgsidir".tgz |sed 's/:/-/g')
@@ -171,6 +167,16 @@ check_prerequisites() {
     fi
 }
 
+find_vm_sku() {
+    zipfile=$(sudo ls /var/lib/waagent/history |grep -E zip |xargs -0 -n 1 --null echo |grep -E _1- |tail -1)
+    zipfile_with_path="/var/lib/waagent/history/$zipfile"
+    vm_sku=$(sudo unzip -p "$zipfile_with_path" |grep -E vmSize | sed 's/"vmSize"/\n"vmSize"/g' | grep '"vmSize"' | awk -F',' '{print $1}' |cut -d: -f2 |sed 's/\"//g')
+    command_divider "extracting vm sku from zip file in /var/lib/waagent/history.  Must access as root."
+    echo "$vm_sku" |tee vm_sku >> "$log"
+    vm_details=$(sudo unzip -p "$zipfile_with_path" |grep -E vmSize | sed 's/"vmSize"/\n"vmSize"/g' | grep '"vmSize"')
+    echo "$vm_details" |tee vm_details >> "$log"
+}
+
 command_divider() {
     echo "$(date +"%FT%T"): "
     echo "$(date +"%FT%T"): ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -196,6 +202,24 @@ get_logs() {
         command_divider "cd /var/log; sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages*"
         sudo tar cvfz "$logdir"/"$clientgsidir"/messages.tgz messages* |tee -a "$log" > /dev/null
         cd "$logdir"/"$clientgsidir" || exit
+    fi
+}
+
+display_hsm_state() {
+    if [ "$local_lustre_mount" ]
+    then
+        for local_lustre_mount in $(mount |grep -E "type lustre" |awk '{print $3}')
+        do
+            command_divider "find $local_lustre_mount -type f -print0 |xargs -0 -n 1 lfs  hsm_state"
+            hsm_state_file=$(echo "hsm_state$local_lustre_mount" |sed 's/\//_/g')
+            echo "$local_lustre_mount" |tee "$hsm_state_file" >> "$log"
+            find "$local_lustre_mount" -type f -print0 |xargs -0 -n 1 lfs hsm_state >> "$hsm_state_file"
+            number_of_files=$(wc -l "$hsm_state_file")
+            echo "Number of files: $number_of_files" |tee -a "$hsm_state_file" >> "$log"
+
+        done
+    else
+        command_divider "Cannot find local lustre mount point.  Unable to display hsm_state."
     fi
 }
 main "$@"
