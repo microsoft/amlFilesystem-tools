@@ -11,19 +11,26 @@
     # ifconfig -a
     # printenv
     # lfs --version
-    # lfs df -h
+    # lfs df -h --lazy; lfs df -hi --lazy
     # lfs check all
-    # cd /var/log; tail -30 syslog
-    # cd /var/log; tar cvfz /tmp/client-gsi-2024-01-08T18:52:21/syslog.tgz syslog*
+    # lfs getname
     # sudo dmesg -T
     # sudo sysctl -a
     # sudo lnetctl stats show
+    # lctl ping nids
     # sudo lctl dl -t
     # mount |egrep lustre; mount
     # cat /etc/fstab |egrep lustre; cat /etc/fstab
-    # cat /sys/devices/virtual/bdi/lustrefs-ffffa09f150c6800/read_ahead_kb
-    # find /lustre -type f -print0 |xargs -0 -n 1 lfs  hsm_state
-
+    # sudo lctl dk dump_kernel
+    # find /var/crash -ls
+    # cat $read_ahead_kb
+    # lfs quota -hv $local_lustre_mount
+    # extracting vm sku from zip file in /var/lib/waagent/history. Must access as root.
+    # cd /var/log; tail -30 syslog
+    # cd /var/log; tar cvfz $logdir/$clientgsidir/syslog.tgz syslog*
+    # cd /var/log; sudo tail -30 messages
+    # cd /var/log; sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages*
+    
 usage() {
     echo "Usage ${0##*/} [options]"
     echo "collect lustre info"
@@ -51,7 +58,9 @@ main() {
                 ;;
         esac
     done
+    
     check_prerequisites # call subroutine to verify client can run the script
+    
     clientgsidir="client-gsi-$(date +"%FT%T")"
     echo "$clientgsidir"
     cd "$logdir" || exit
@@ -66,7 +75,9 @@ main() {
     tee release  >> "$log" < /etc/os-release
     command_divider "uptime; uptime -p"
     uptime |tee uptime >> "$log"; uptime -p |tee -a uptime >> "$log"
+
     find_vm_sku # call subroutine to find the azure sku for the vm
+    
     command_divider "netstat -rn"
     netstat -rn |tee netstat_rn >> "$log"
     command_divider "netstat -Wan"
@@ -75,16 +86,21 @@ main() {
     ifconfig -a 2>&1 |tee ifconfig_a >> "$log"
     command_divider "printenv"
     printenv |tee printenv >> "$log"
+    # lfs commands
+    command_divider "lfs --version"
+    lfs --version |tee lfs_version >> "$log"
+    command_divider "lfs df -h --lazy; lfs df -hi --lazy" # --lazy will allow command to run if an OST is having problems.
+    {
+    echo "lfs df -h (bytes)" | tee lfs_df
+    lfs df -h --lazy |tee -a lfs_df
+    echo "lfs df -hi (inodes)" |tee -a lfs_df
+    lfs df -hi --lazy |tee -a lfs_df
+     } >> "$log"
+    command_divider "lfs check all"
+    lfs check all 2>&1 |tee lfs_check_all >> "$log"
+    command_divider "lfs getname"
+    lfs getname 2>&1 |tee lfs_getname >> "$log"
 
-    if [ -f /usr/bin/lfs ]
-    then
-        command_divider "lfs --version"
-        lfs --version |tee lfs_version >> "$log"
-        command_divider "lfs df -h"
-        lfs df -h |tee lfs_df >> "$log"
-        command_divider "lfs check all"
-        lfs check all 2>&1 |tee lfs_check_all >> "$log"
-    fi
     get_logs # subroutine to get syslog or messages files
 
     command_divider "sudo dmesg -T"
@@ -93,6 +109,12 @@ main() {
     sudo sysctl -a | tee sysctl > /dev/null
     command_divider "sudo lnetctl stats show"
     sudo lnetctl stats show |tee lnetctl_stats >> "$log"
+    command_divider "lctl ping nids"
+    for nid in $(sudo lctl list_nids)
+    do 
+        echo "nid: $nid" |tee lctl_ping_nids >> "$log"
+        sudo lctl ping "$nid" |tee -a lctl_ping_nids >> "$log"
+    done
     command_divider "sudo lctl dl -t"
     sudo lctl dl -t |tee lctl_dl >> "$log"
     command_divider "mount |egrep lustre; mount"
@@ -105,11 +127,14 @@ main() {
     else
         command_divider "No /etc/fstab file."
     fi
+    command_divider "sudo lctl dk dump_kernel"
+    sudo lctl dk dump_kernel |tee -a "$log" > /dev/null
+    sudo chmod 666 dump_kernel
     command_divider "find /var/crash -ls"
     find /var/crash -ls |tee var_crash >> "$log"
 
-    local_lustre_mount=$(mount |grep -E "type lustre" |awk '{print $3}' |tail -1)
-    if [ "$local_lustre_mount" ]
+    local_lustre_mounts=$(lfs getname |awk '{print $2}')
+    if [ "$local_lustre_mounts" ]
     then
         for read_ahead_kb in /sys/devices/virtual/bdi/lustrefs-*/read_ahead_kb
         do
@@ -117,6 +142,13 @@ main() {
             echo -n "$read_ahead_kb: " >> read_ahead_kb
             tee -a read_ahead_kb < "$read_ahead_kb" >> "$log"
         done
+        for local_lustre_mount in $local_lustre_mounts
+        do
+            command_divider "lfs quota -hv $local_lustre_mount"
+            lfs quota -hv "$local_lustre_mount" |tee -a lfs_quota >> "$log"
+        done
+    else
+        command_divider "Lustre/amlfs is not mounted by client!"
     fi
 
     if [ "$read_ahead_kb" ]
@@ -152,7 +184,6 @@ check_prerequisites() {
     lfs_exists=$(which lfs)
     lctl_exists=$(which lctl)
     lnetctl_exists=$(which lnetctl)
-    # echo "lfs: " $lfs_exists "lctl: " $lctl_exists "lnetctl: " $lnetctl_exists
     if [ "$lfs_exists" ] || [ "$lctl_exists" ] || [ "$lnetctl_exists" ]
     then
         echo "Yes, Lustre client!"
@@ -206,9 +237,9 @@ get_logs() {
 }
 
 display_hsm_state() {
-    if [ "$local_lustre_mount" ]
+    if [ "$local_lustre_mounts" ]
     then
-        for local_lustre_mount in $(mount |grep -E "type lustre" |awk '{print $3}')
+        for local_lustre_mount in $("$local_lustre_mounts")
         do
             command_divider "find $local_lustre_mount -type f -print0 |xargs -0 -n 1 lfs  hsm_state"
             hsm_state_file=$(echo "hsm_state$local_lustre_mount" |sed 's/\//_/g')
@@ -216,7 +247,6 @@ display_hsm_state() {
             find "$local_lustre_mount" -type f -print0 |xargs -0 -n 1 lfs hsm_state >> "$hsm_state_file"
             number_of_files=$(wc -l "$hsm_state_file")
             echo "Number of files: $number_of_files" |tee -a "$hsm_state_file" >> "$log"
-
         done
     else
         command_divider "Cannot find local lustre mount point.  Unable to display hsm_state."
