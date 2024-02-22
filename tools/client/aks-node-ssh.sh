@@ -2,34 +2,6 @@
 #
 # Copyright (c) Microsoft Corporation. All rights reserved.
 #
-# collect Lustre client info for troubleshooting.  As of 1/8/2024 commands run to collect logs:
-    # uname -a
-    # cat /etc/os-release
-    # uptime; uptime -p
-    # netstat -rn
-    # netstat -Wan
-    # ifconfig -a
-    # printenv
-    # lfs --version
-    # lfs df -h --lazy; lfs df -hi --lazy
-    # lfs check all
-    # lfs getname
-    # sudo dmesg -T
-    # sudo sysctl -a
-    # sudo lnetctl stats show
-    # lctl ping nids
-    # sudo lctl dl -t
-    # mount |egrep lustre; mount
-    # cat /etc/fstab |egrep lustre; cat /etc/fstab
-    # sudo lctl dk dump_kernel
-    # find /var/crash -ls
-    # cat $read_ahead_kb
-    # lfs quota -hv $local_lustre_mount
-    # extracting vm sku from zip file in /var/lib/waagent/history. Must access as root.
-    # cd /var/log; tail -30 syslog
-    # cd /var/log; tar cvfz $logdir/$clientgsidir/syslog.tgz syslog*
-    # cd /var/log; sudo tail -30 messages
-    # cd /var/log; sudo tar cvfz $logdir/$clientgsidir/messages.tgz messages*
     
 usage() {
     echo "Usage ${0##*/} [options]"
@@ -41,7 +13,24 @@ usage() {
 }
 
 main() {
-    logdir=$PWD
+    readarray -t nodes_array <<< "$(kubectl get nodes |grep -Ev ^NAME |awk '{print $1}')"
+    menu_number=1
+    # for aks_node_name in $(kubectl get nodes |grep -Ev ^NAME |awk '{print $1}')
+    # echo "${nodes_array[@]}"
+    for aks_node_name in "${nodes_array[@]}"
+    do
+        echo "$menu_number. $aks_node_name"
+        ((menu_number += 1))
+    done
+    ((menu_number-=1))
+    echo
+    read -p "Enter number next to node 1..$menu_number: " node_number
+    array_index=$((node_number - 1))
+    aks_node="${nodes_array[$array_index]}"
+    echo "$aks_node"
+    kubectl debug node/${aks_node} --image=ubuntu -it
+    exit
+    logdir=$HOME
     while getopts "hl:s" arg; do
         case $arg in
             h)
@@ -239,7 +228,7 @@ get_logs() {
 display_hsm_state() {
     if [ "$local_lustre_mounts" ]
     then
-        for local_lustre_mount in $local_lustre_mounts
+        for local_lustre_mount in $("$local_lustre_mounts")
         do
             command_divider "find $local_lustre_mount -type f -print0 |xargs -0 -n 1 lfs  hsm_state"
             hsm_state_file=$(echo "hsm_state$local_lustre_mount" |sed 's/\//_/g')
