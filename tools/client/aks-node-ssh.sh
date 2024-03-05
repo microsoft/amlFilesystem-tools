@@ -41,7 +41,7 @@ main() {
                 fi
             else
                 # At this point the menu choice is not numeric.
-                # if the response starts with e (lower or upper case) it has the same effect as 0 (exit)
+                # if the response starts with e or q (lower or upper case) it has the same effect as 0 (exit)
                 node_number="${node_number,,}" # converts to lower case
                 if [[ "$node_number" =~ ^e ]] || [[ "$node_number" =~ ^q ]]
                 then
