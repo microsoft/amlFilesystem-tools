@@ -23,3 +23,10 @@ Tool for collecintg information from a non-k8s lustre clients
 * -h display help info
 *
 * Information is gathered into a tarball file in the format: client-gsi-YYYY-MM-DDTHH-MM-SS.tgz
+
+== aks-node-ssh.sh usage:
+
+Tool to allow ease of access when using ssh to connect to an aks/k8s node
+* Running the script will display a numbered list of the nodes - created from the output of kubectl get nodes
+* Enter the number next to the aks node to initiate an ssh session
+* Prompt reminds to enter "chroot /host /bin/bash" once connected to a node
