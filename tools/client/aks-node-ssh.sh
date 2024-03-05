@@ -4,6 +4,13 @@
 #
 
 main() {
+    kubectl_exists=$(which kubectl)
+    if [ ! "$kubectl_exists" ]
+    then
+        echo "This tool requires the kubectl command.  Cannot find kubectl in path."
+        exit
+    fi
+
     readarray -t nodes_array <<< "$(kubectl get nodes |grep -Ev ^NAME |awk '{print $1}')"
     if [ "${nodes_array[0]}" ]
     then
