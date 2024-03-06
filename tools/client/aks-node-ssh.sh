@@ -35,7 +35,7 @@ main() {
                     if [ "${nodes_array[$array_index]}" ]
                     then
                         aks_node="${nodes_array[$array_index]}"
-                        echo "Once connected to node $aks_node enter chroot /host /bin/bash"
+                        # echo "Once connected to node $aks_node enter chroot /host /bin/bash"
                         kubectl debug node/"${aks_node}" --image=ubuntu -it -- chroot /host /bin/bash
                         # kubectl debug node/"${aks_node}" --image=ubuntu -it
                         # Adding "-- chroot /host /bin/bash" to the kubectl command above 
