@@ -4,14 +4,29 @@
 #
 
 main() {
+    privilege_mode=0
+    while getopts "p" arg; do
+        case $arg in
+            p)
+                privilege_mode=1
+                ;;
+            *)
+                exit
+                ;;
+        esac
+    done
     kubectl_exists=$(which kubectl)
     if [ ! "$kubectl_exists" ]
     then
         echo "This tool requires the kubectl command.  Cannot find kubectl in path."
         exit
     fi
-
-    readarray -t nodes_array <<< "$(kubectl get nodes |grep -Ev ^NAME |awk '{print $1}')"
+    if [ "$privilege_mode" = 0 ] # not privilege mode
+    then
+        readarray -t nodes_array <<< "$(kubectl get nodes |grep -Ev ^NAME |awk '{print $1}')"
+    else
+        readarray -t nodes_array <<< "$(kubectl get pods -o wide |grep -Ev ^NAME |grep -E ^privileged- |awk '{print $1, $7}')"
+    fi
     if [ "${nodes_array[0]}" ]
     then
         node_number=99
@@ -35,11 +50,13 @@ main() {
                     if [ "${nodes_array[$array_index]}" ]
                     then
                         aks_node="${nodes_array[$array_index]}"
-                        # echo "Once connected to node $aks_node enter chroot /host /bin/bash"
-                        kubectl debug node/"${aks_node}" --image=ubuntu -it -- chroot /host /bin/bash
-                        # kubectl debug node/"${aks_node}" --image=ubuntu -it
-                        # Adding "-- chroot /host /bin/bash" to the kubectl command above 
-                        # so users to not have to enter it manually.  May need to remove this later.
+                        if [ "$privilege_mode" = 0 ] # not privilege mode
+                        then
+                            kubectl debug node/"${aks_node}" --image=ubuntu -it -- chroot /host /bin/bash
+                        else
+                            aks_pod=$(echo "$aks_node" |awk '{print $1}')
+                            kubectl exec -it pod/"${aks_pod}" -- chroot /host /bin/bash
+                        fi
                     fi
                 fi
             else
@@ -55,7 +72,13 @@ main() {
             fi
         done
     else
-        echo "No nodes listed with kubectl get nodes command.  Consider re-running the aks-node-ssh.sh script."
+        if [ "$privilege_mode" = 0 ]
+        then
+            echo "No nodes listed with kubectl get nodes command.  Consider re-running the aks-node-ssh.sh script."
+        else
+            echo "Running in privilege mode.  No debug pods listed with kubectl get pods command."
+            echo "Make sure you have properly executed the 'kubectl apply -f privileged.yaml' command."
+        fi
     fi
 }
 main "$@"
