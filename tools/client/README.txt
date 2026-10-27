@@ -1,5 +1,32 @@
 This directory contains tools for troubleshooting Lustre on a client.
 
+=== client_network_check.bash usage:
+
+Check network dependencies used by Azure Managed Lustre from a Linux VM,
+preferably in the same subnet as the cluster. A peered subnet with equivalent
+routing and NSGs gives indicative results only.
+
+Requires bash, curl, getent, and timeout (plus standard Linux utilities).
+For effective NSG/route checks, install Azure CLI and sign in with
+"az login --identity" or "az login". The identity needs Reader access to
+the VM and its NIC/virtual network resources. Use --skip-az to omit these checks.
+
+Examples:
+* bash client_network_check.bash --skip-az
+* bash client_network_check.bash --storage-url https://myacct.blob.core.windows.net
+
+Options:
+* --storage-url <https://...> full HSM storage endpoint URL from your configuration;
+  storage checks are skipped if omitted.
+* --cloud public|AzureUSGovernment overrides cloud detection from VM metadata
+* --skip-az skips Azure CLI checks; no Azure sign-in is needed
+* --verbose or -v enables verbose output
+* --help or -h displays help
+
+Exit status is 0 if no checks fail; otherwise it is the failure count.
+Some dependencies are sampled or skipped, so a successful run does not rule
+out all network issues. Attach the output when opening an Azure support ticket.
+
 === collect.bash usage:
 
 For basic info collection:
